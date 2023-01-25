@@ -14,10 +14,12 @@ const byte address_hue = 1;
 /**
  * LED
  */
-#define LED_PIN     5
-#define NUM_LEDS    25
-#define BRIGHTNESS  255
-#define LED_TYPE    WS2812B
+#define LED_PIN 5
+#define NUM_LEDS 25
+#define BRIGHTNESS 255
+#define MIN_BRIGHTNESS 5
+#define MAX_BRIGHTNESS 200
+#define LED_TYPE WS2812B
 #define COLOR_ORDER GRB
 CRGB leds[NUM_LEDS];
 
@@ -31,6 +33,8 @@ volatile byte h = 60;
  * Poti
  */
 const byte pinPoti = 0;
+#define POTI_MIN_VALUE 0
+#define POTI_MAX_VALUE 1023
 
 /**
  * Rotary Encoder
@@ -71,14 +75,13 @@ const boolean debugState = false;
 
 static unsigned long lastInterruptTime = 0;
 
-void isr ()  {
+void isr() {
   unsigned long interruptTime = millis();
 
   if (interruptTime - lastInterruptTime > 5) {
     if (digitalRead(pinDT) == digitalRead(pinCLK)) {
       h += 2;
-    }
-    else {
+    } else {
       h -= 2;
     }
   }
@@ -86,9 +89,9 @@ void isr ()  {
 }
 
 void setup() {
-  delay( 3000 );
-  FastLED.addLeds<LED_TYPE, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection( TypicalLEDStrip );
-  FastLED.setBrightness(  BRIGHTNESS );
+  delay(3000);
+  FastLED.addLeds<LED_TYPE, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
+  FastLED.setBrightness(BRIGHTNESS);
 
   pinMode(pinPoti, INPUT);
 
@@ -113,7 +116,7 @@ void setup() {
 
 void loop() {
   unsigned short valuePoti = analogRead(pinPoti);
-  v = map(valuePoti, 0, 1023, 5, 255);
+  v = map(valuePoti, POTI_MIN_VALUE, POTI_MAX_VALUE, MIN_BRIGHTNESS, MAX_BRIGHTNESS);
 
   if (debugPoti) {
     Serial.print(valuePoti);
@@ -135,7 +138,7 @@ void loop() {
       if (debugRotary) {
         Serial.println("Switch released");
       }
-    }/* else {
+    } /* else {
       //switch not pressed
     } */
   }
@@ -168,7 +171,7 @@ void loop() {
         Serial.println("Confetti");
         break;
       case STATE_RAINBOW_2:
-      Serial.println("Rainbow 2");
+        Serial.println("Rainbow 2");
         break;
     }
   }
@@ -198,37 +201,36 @@ void loop() {
 
 void fadeLEDsRainbow() {
   hRb = hRbStart;
-  for ( byte i = 0; i < NUM_LEDS; i++) {
+  for (byte i = 0; i < NUM_LEDS; i++) {
     hRb += DELTA_RAINBOW;
-    leds[i] = CHSV( hRb, SATURATION, v);
+    leds[i] = CHSV(hRb, SATURATION, v);
   }
   ++hRbStart;
 }
 
 void fadeLEDsRainbow2() {
   hRb2 = hRbStart2;
-  fill_solid( leds, NUM_LEDS, CHSV( hRb2, SATURATION, v));
+  fill_solid(leds, NUM_LEDS, CHSV(hRb2, SATURATION, v));
   ++hRbStart2;
   //For confetti we only want ~25 updates per seconds instead of 100
-  delay(30); 
+  delay(30);
 }
 
-void confetti()
-{
-  fadeToBlackBy( leds, NUM_LEDS, 10);
+void confetti() {
+  fadeToBlackBy(leds, NUM_LEDS, 10);
   int pos = random16(NUM_LEDS);
-  leds[pos] += CHSV( h + random8(64), SATURATION, v);
+  leds[pos] += CHSV(h + random8(64), SATURATION, v);
   //For confetti we only want ~25 updates per seconds instead of 100
-  delay(30); 
+  delay(30);
 }
 
 
 void fadeLEDsWhite() {
-  fill_solid( leds, NUM_LEDS, CHSV( 60, 128, v));
+  fill_solid(leds, NUM_LEDS, CHSV(60, 128, v));
 }
 
 void fadeLEDs() {
-  for ( byte i = 0; i < NUM_LEDS; i++) {
-    leds[i] = CHSV( h, SATURATION, v);
+  for (byte i = 0; i < NUM_LEDS; i++) {
+    leds[i] = CHSV(h, SATURATION, v);
   }
 }
